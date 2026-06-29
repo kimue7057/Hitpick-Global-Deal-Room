@@ -34,7 +34,7 @@ export function SiteHeader() {
       }`}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-        <Link className="flex shrink-0 items-center" href="/global-deal">
+        <Link className="flex shrink-0 items-center" href="/">
           <img
             alt="Hit Deal Room"
             className="h-11 w-auto"

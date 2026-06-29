@@ -1,5 +1,5 @@
 export type NavItem = {
-  href: "/global-deal" | "/creator" | "/about";
+  href: "/" | "/global-deal" | "/creator" | "/about";
   label: string;
 };
 
@@ -70,6 +70,7 @@ export const makeImageAssets = {
 } as const;
 
 export const navigationItems: NavItem[] = [
+  { href: "/", label: "Home" },
   { href: "/global-deal", label: "Global Deal" },
   { href: "/creator", label: "Creator" },
   { href: "/about", label: "About" },
@@ -93,8 +94,9 @@ export const footerColumns = [
 export const globalDealCreatorCards: GlobalDealVisualCard[] = [
   {
     asset: {
-      alt: "Launch Your Brand Creator-Led Commerce banner crop",
-      objectPosition: "left center",
+      alt: "Launch Your Brand Creator-Led Commerce banner",
+      backgroundClassName: "bg-[#06070d]",
+      fit: "contain",
       src: makeImageAssets.heroBanner,
     },
     category: "Beauty Creator",
@@ -108,8 +110,6 @@ export const globalDealCreatorCards: GlobalDealVisualCard[] = [
       alt: "Hit logo mark",
       backgroundClassName: "bg-[#120922]",
       fit: "contain",
-      imageClassName: "scale-[1.35]",
-      objectPosition: "center center",
       src: makeImageAssets.logoMark,
     },
     category: "Lifestyle Creator",
@@ -121,8 +121,9 @@ export const globalDealCreatorCards: GlobalDealVisualCard[] = [
   },
   {
     asset: {
-      alt: "Launch Your Brand Creator-Led Commerce banner crop",
-      objectPosition: "right center",
+      alt: "Launch Your Brand Creator-Led Commerce banner",
+      backgroundClassName: "bg-[#06070d]",
+      fit: "contain",
       src: makeImageAssets.heroBanner,
     },
     category: "Food Creator",
@@ -133,9 +134,9 @@ export const globalDealCreatorCards: GlobalDealVisualCard[] = [
   },
   {
     asset: {
-      alt: "Hit Deal Room wordmark crop",
+      alt: "Hit Deal Room wordmark",
       backgroundClassName: "bg-[#05060b]",
-      objectPosition: "left center",
+      fit: "contain",
       src: makeImageAssets.logoWordmark,
     },
     category: "Short-form Creator",
@@ -146,8 +147,9 @@ export const globalDealCreatorCards: GlobalDealVisualCard[] = [
   },
   {
     asset: {
-      alt: "Launch Your Brand Creator-Led Commerce banner crop",
-      objectPosition: "center center",
+      alt: "Launch Your Brand Creator-Led Commerce banner",
+      backgroundClassName: "bg-[#06070d]",
+      fit: "contain",
       src: makeImageAssets.heroBanner,
     },
     category: "Fashion Creator",
@@ -159,11 +161,9 @@ export const globalDealCreatorCards: GlobalDealVisualCard[] = [
   },
   {
     asset: {
-      alt: "Hit logo mark crop",
+      alt: "Hit logo mark",
       backgroundClassName: "bg-[#0b0716]",
       fit: "contain",
-      imageClassName: "scale-[1.2]",
-      objectPosition: "center center",
       src: makeImageAssets.logoMark,
     },
     category: "Travel Creator",
@@ -253,8 +253,9 @@ export const networkDistributionTags = [
 export const creatorRailCards: CreatorRailCard[] = [
   {
     asset: {
-      alt: "Launch Your Brand Creator-Led Commerce banner crop",
-      objectPosition: "left center",
+      alt: "Launch Your Brand Creator-Led Commerce banner",
+      backgroundClassName: "bg-[#06070d]",
+      fit: "contain",
       src: makeImageAssets.heroBanner,
     },
     color: "#ec4899",
@@ -264,9 +265,9 @@ export const creatorRailCards: CreatorRailCard[] = [
   },
   {
     asset: {
-      alt: "Hit Deal Room wordmark crop",
+      alt: "Hit Deal Room wordmark",
       backgroundClassName: "bg-[#07080d]",
-      objectPosition: "left center",
+      fit: "contain",
       src: makeImageAssets.logoWordmark,
     },
     color: "#3b82f6",
@@ -279,8 +280,6 @@ export const creatorRailCards: CreatorRailCard[] = [
       alt: "Hit logo mark on dark background",
       backgroundClassName: "bg-[#120922]",
       fit: "contain",
-      imageClassName: "scale-[1.35]",
-      objectPosition: "center center",
       src: makeImageAssets.logoMark,
     },
     color: "#8b5cf6",
@@ -290,8 +289,9 @@ export const creatorRailCards: CreatorRailCard[] = [
   },
   {
     asset: {
-      alt: "Launch Your Brand Creator-Led Commerce banner crop",
-      objectPosition: "center center",
+      alt: "Launch Your Brand Creator-Led Commerce banner",
+      backgroundClassName: "bg-[#06070d]",
+      fit: "contain",
       src: makeImageAssets.heroBanner,
     },
     color: "#f59e0b",
@@ -301,8 +301,9 @@ export const creatorRailCards: CreatorRailCard[] = [
   },
   {
     asset: {
-      alt: "Launch Your Brand Creator-Led Commerce banner crop",
-      objectPosition: "right center",
+      alt: "Launch Your Brand Creator-Led Commerce banner",
+      backgroundClassName: "bg-[#06070d]",
+      fit: "contain",
       src: makeImageAssets.heroBanner,
     },
     color: "#10b981",
@@ -312,9 +313,9 @@ export const creatorRailCards: CreatorRailCard[] = [
   },
   {
     asset: {
-      alt: "Hit Deal Room wordmark crop",
+      alt: "Hit Deal Room wordmark",
       backgroundClassName: "bg-[#05060b]",
-      objectPosition: "center center",
+      fit: "contain",
       src: makeImageAssets.logoWordmark,
     },
     color: "#06b6d4",
@@ -324,11 +325,9 @@ export const creatorRailCards: CreatorRailCard[] = [
   },
   {
     asset: {
-      alt: "Hit logo mark crop",
+      alt: "Hit logo mark",
       backgroundClassName: "bg-[#120922]",
       fit: "contain",
-      imageClassName: "scale-[1.25]",
-      objectPosition: "center center",
       src: makeImageAssets.logoMark,
     },
     color: "#a855f7",
@@ -338,8 +337,9 @@ export const creatorRailCards: CreatorRailCard[] = [
   },
   {
     asset: {
-      alt: "Launch Your Brand Creator-Led Commerce banner crop",
-      objectPosition: "60% center",
+      alt: "Launch Your Brand Creator-Led Commerce banner",
+      backgroundClassName: "bg-[#06070d]",
+      fit: "contain",
       src: makeImageAssets.heroBanner,
     },
     color: "#f97316",
