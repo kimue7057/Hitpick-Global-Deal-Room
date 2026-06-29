@@ -106,11 +106,15 @@ type EmailDeliveryStatus = {
   emailSent: boolean;
 };
 
-type ResolvedServices = {
+type EmailServices = {
   adminEmail: string;
-  bucket: string;
   emailFrom: string;
   resend: Resend;
+};
+
+type ResolvedServices = {
+  bucket: string;
+  email: EmailServices | null;
   supabase: ReturnType<typeof createSupabaseClient>;
 };
 
@@ -138,15 +142,30 @@ function getRequiredEnv(name: string) {
   return value;
 }
 
+function getOptionalEnv(name: string) {
+  const value = process.env[name]?.trim();
+  return value ? value : null;
+}
+
 function getServices(): ResolvedServices {
   const url = getRequiredEnv("SUPABASE_URL");
-  const serviceRoleKey = getRequiredEnv("SUPABASE_SERVICE_ROLE_KEY");
+  const serviceRoleKey =
+    getOptionalEnv("SUPABASE_SECRET_KEY") ?? getRequiredEnv("SUPABASE_SERVICE_ROLE_KEY");
+  const resendApiKey = getOptionalEnv("RESEND_API_KEY");
+  const emailFrom = getOptionalEnv("EMAIL_FROM");
+  const adminEmail = getOptionalEnv("ADMIN_EMAIL");
+  const email =
+    resendApiKey && emailFrom && adminEmail
+      ? {
+          adminEmail,
+          emailFrom,
+          resend: new Resend(resendApiKey),
+        }
+      : null;
 
   return {
-    adminEmail: getRequiredEnv("ADMIN_EMAIL"),
     bucket: getRequiredEnv("SUPABASE_STORAGE_BUCKET"),
-    emailFrom: getRequiredEnv("EMAIL_FROM"),
-    resend: new Resend(getRequiredEnv("RESEND_API_KEY")),
+    email,
     supabase: createSupabaseClient(url, serviceRoleKey),
   };
 }
@@ -656,22 +675,29 @@ async function sendEmails(
   services: ResolvedServices,
   record: SubmissionRecord,
 ): Promise<EmailDeliveryStatus> {
+  if (!services.email) {
+    return {
+      adminEmailSent: false,
+      emailSent: false,
+    };
+  }
+
   const userMessage = buildEmailMessage(record, "user");
   const adminMessage = buildEmailMessage(record, "admin");
   const [userResult, adminResult] = await Promise.allSettled([
-    services.resend.emails.send({
-      from: services.emailFrom,
+    services.email.resend.emails.send({
+      from: services.email.emailFrom,
       html: userMessage.html,
       subject: userMessage.subject,
       text: userMessage.text,
       to: record.email,
     }),
-    services.resend.emails.send({
-      from: services.emailFrom,
+    services.email.resend.emails.send({
+      from: services.email.emailFrom,
       html: adminMessage.html,
       subject: adminMessage.subject,
       text: adminMessage.text,
-      to: services.adminEmail,
+      to: services.email.adminEmail,
     }),
   ]);
 
@@ -807,13 +833,16 @@ export async function issueMouSubmission(input: unknown): Promise<IssueResult> {
     ...insertedRecord,
     ...delivery,
   };
+  const emailConfigured = Boolean(services.email);
 
   return {
     token: toIssuedToken(finalRecord),
     warning:
-      delivery.emailSent && delivery.adminEmailSent
-        ? undefined
-        : "Token issued, but one or more email deliveries need attention.",
+      !emailConfigured
+        ? "Token issued and saved to Supabase. Email delivery is skipped until RESEND_API_KEY, EMAIL_FROM, and ADMIN_EMAIL are configured."
+        : delivery.emailSent && delivery.adminEmailSent
+          ? undefined
+          : "Token issued, but one or more email deliveries need attention.",
   };
 }
 
@@ -837,6 +866,13 @@ async function findSubmissionById(
 export async function resendMouEmails(input: unknown): Promise<ResendResult> {
   const { submissionId } = parseResendInput(input);
   const services = getServices();
+
+  if (!services.email) {
+    throw new MouRequestError(
+      "Email delivery is not configured yet. Add RESEND_API_KEY, EMAIL_FROM, and ADMIN_EMAIL first.",
+    );
+  }
+
   const record = await findSubmissionById(services, submissionId);
   const delivery = await sendEmails(services, record);
 

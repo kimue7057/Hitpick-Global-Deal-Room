@@ -973,6 +973,8 @@ function DealModal({
     }
   };
 
+  const emailUnavailable = issueWarning?.includes("Email delivery is skipped") ?? false;
+
   if (step === "closed") {
     return null;
   }
@@ -1309,12 +1311,18 @@ function DealModal({
                       ? "border-green-500/25 bg-green-500/15 text-green-400"
                       : "border-blue-500/30 bg-blue-600/80 text-white hover:bg-blue-600"
                   }`}
-                  disabled={token.emailSent || isResending}
-                  onClick={token.emailSent ? undefined : resendEmail}
+                  disabled={token.emailSent || isResending || emailUnavailable}
+                  onClick={token.emailSent || emailUnavailable ? undefined : resendEmail}
                   type="button"
                 >
                   {token.emailSent ? <CheckCircle2 size={16} /> : <Mail size={16} />}
-                  {token.emailSent ? "Email Sent" : isResending ? "Resending..." : "Resend Email"}
+                  {token.emailSent
+                    ? "Email Sent"
+                    : emailUnavailable
+                      ? "Email Not Configured"
+                      : isResending
+                        ? "Resending..."
+                        : "Resend Email"}
                 </button>
                 <button
                   className="flex flex-col items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 py-3 text-xs font-semibold text-white/70 transition-all hover:bg-white/10"
