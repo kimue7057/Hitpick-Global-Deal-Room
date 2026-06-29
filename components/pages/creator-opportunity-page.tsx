@@ -26,6 +26,14 @@ import {
   creatorRailCards,
   makeImageAssets,
 } from "@/lib/make-site-data";
+import {
+  CERTIFICATE_NOTICE,
+  type CreatorFormData,
+  type CreatorIssuePayload,
+  type CreatorIssuedToken,
+  type MouIssueResponse,
+  type MouResendResponse,
+} from "@/lib/mou/types";
 
 type CreatorCategory =
   | "Beauty"
@@ -72,26 +80,6 @@ type Channel =
   | "Other";
 
 type ModalStep = "closed" | "form" | "mou" | "token";
-
-interface CreatorForm {
-  country: string;
-  creatorName: string;
-  email: string;
-  mainChannel: string;
-  shortBio: string;
-  snsLink: string;
-}
-
-interface TokenData extends CreatorForm {
-  category: CreatorCategory;
-  channel: Channel;
-  goal: CollabGoal;
-  hash: string;
-  issuedAt: string;
-  region: Region;
-  route: string[];
-  tokenId: string;
-}
 
 const cardBase = "rounded-2xl border border-white/[0.07] bg-[#0d1424]";
 const inputCls =
@@ -247,19 +235,6 @@ function generateRoute(
         "Creator Token",
       ];
   }
-}
-
-async function sha256(message: string): Promise<string> {
-  const buffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(message));
-
-  return Array.from(new Uint8Array(buffer))
-    .map((value) => value.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-function genTokenId() {
-  const sequence = String(Math.floor(Math.random() * 999999) + 1).padStart(6, "0");
-  return `HP-CREATOR-${new Date().getFullYear()}-${sequence}`;
 }
 
 function CreatorHero({ onJoin, onSignMou }: { onJoin: () => void; onSignMou: () => void }) {
@@ -762,7 +737,7 @@ function CreatorModal({
   region: Region | "";
   step: ModalStep;
 }) {
-  const [form, setForm] = useState<CreatorForm>({
+  const [form, setForm] = useState<CreatorFormData>({
     country: "",
     creatorName: "",
     email: "",
@@ -771,9 +746,12 @@ function CreatorModal({
     snsLink: "",
   });
   const [currentStep, setCurrentStep] = useState<"form" | "mou" | "token">("form");
-  const [token, setToken] = useState<TokenData | null>(null);
+  const [token, setToken] = useState<CreatorIssuedToken | null>(null);
   const [hasSignature, setHasSignature] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
+  const [isIssuing, setIsIssuing] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [issueError, setIssueError] = useState<string | null>(null);
+  const [issueWarning, setIssueWarning] = useState<string | null>(null);
 
   const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
@@ -783,10 +761,15 @@ function CreatorModal({
     if (step !== "closed") {
       setCurrentStep(step === "mou" ? "mou" : "form");
       setHasSignature(false);
-      setEmailSent(false);
+      setIssueError(null);
+      setIssueWarning(null);
       setToken(null);
+      setForm((previous) => ({
+        ...previous,
+        mainChannel: previous.mainChannel || channel || "",
+      }));
     }
-  }, [step]);
+  }, [channel, step]);
 
   const getPosition = (event: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
@@ -848,25 +831,110 @@ function CreatorModal({
     setHasSignature(false);
   };
 
-  const issueToken = async () => {
-    const id = genTokenId();
-    const now = new Date().toISOString();
-    const hash = await sha256(`${form.creatorName}${form.email}${id}${now}`);
-    const route =
-      category && goal && region && channel ? generateRoute(category, goal, region, channel) : [];
+  const getSignatureImage = () => {
+    const canvas = signatureCanvasRef.current;
 
-    setToken({
-      ...form,
-      category: category as CreatorCategory,
-      channel: channel as Channel,
-      goal: goal as CollabGoal,
-      hash,
-      issuedAt: now,
-      region: region as Region,
-      route,
-      tokenId: id,
-    });
-    setCurrentStep("token");
+    if (!canvas || !hasSignature) {
+      return null;
+    }
+
+    return canvas.toDataURL("image/png");
+  };
+
+  const issueToken = async () => {
+    const signatureImage = getSignatureImage();
+
+    if (!signatureImage) {
+      setIssueError("Please add your signature before issuing the token.");
+      return;
+    }
+
+    setIsIssuing(true);
+    setIssueError(null);
+    setIssueWarning(null);
+
+    try {
+      const payload: CreatorIssuePayload = {
+        formData: {
+          ...form,
+          mainChannel: form.mainChannel || channel,
+        },
+        route:
+          category && goal && region && channel
+            ? generateRoute(category, goal, region, channel)
+            : [],
+        selections: {
+          category,
+          channel,
+          goal,
+          region,
+        },
+        signatureImage,
+        type: "creator",
+      };
+      const response = await fetch("/api/mou/issue", {
+        body: JSON.stringify(payload),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+      const result = (await response.json()) as MouIssueResponse;
+
+      if (!response.ok || !result.ok) {
+        throw new Error(result.ok ? "Unable to issue the token." : result.error);
+      }
+
+      setToken(result.token as CreatorIssuedToken);
+      setIssueWarning(result.warning ?? null);
+      setCurrentStep("token");
+    } catch (error) {
+      setIssueError(
+        error instanceof Error ? error.message : "Unable to issue the token right now.",
+      );
+    } finally {
+      setIsIssuing(false);
+    }
+  };
+
+  const resendEmail = async () => {
+    if (!token) {
+      return;
+    }
+
+    setIsResending(true);
+    setIssueError(null);
+
+    try {
+      const response = await fetch("/api/mou/resend", {
+        body: JSON.stringify({ submissionId: token.submissionId }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+      const result = (await response.json()) as MouResendResponse;
+
+      if (!response.ok || !result.ok) {
+        throw new Error(result.ok ? "Unable to resend the email." : result.error);
+      }
+
+      setToken((previous) =>
+        previous
+          ? {
+              ...previous,
+              adminEmailSent: result.adminEmailSent,
+              emailSent: result.emailSent,
+            }
+          : previous,
+      );
+    } catch (error) {
+      setIssueError(
+        error instanceof Error ? error.message : "Unable to resend the email right now.",
+      );
+    } finally {
+      setIsResending(false);
+    }
   };
 
   if (step === "closed") {
@@ -961,7 +1029,7 @@ function CreatorModal({
                       }))
                     }
                     placeholder={field.placeholder}
-                    value={form[field.key as keyof CreatorForm]}
+                    value={form[field.key as keyof CreatorFormData]}
                   />
                 ))}
               </div>
@@ -1083,12 +1151,14 @@ function CreatorModal({
 
               <button
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 py-3.5 text-sm font-bold text-white transition-all hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-30"
-                disabled={!hasSignature}
+                disabled={!hasSignature || isIssuing}
                 onClick={issueToken}
                 type="button"
               >
-                <Award size={15} /> Issue Creator Passport Token
+                <Award size={15} />{" "}
+                {isIssuing ? "Issuing Token..." : "Issue Creator Passport Token"}
               </button>
+              {issueError ? <p className="mt-3 text-sm text-rose-300">{issueError}</p> : null}
             </div>
           ) : null}
 
@@ -1105,7 +1175,9 @@ function CreatorModal({
                   >
                     Creator Passport Token Issued
                   </h3>
-                  <p className="text-xs text-white/40">Your Creator Network MOU has been signed.</p>
+                  <p className="text-xs text-white/40">
+                    Your Creator Network MOU has been issued from the server and stored in Hitpick.
+                  </p>
                 </div>
               </div>
 
@@ -1139,15 +1211,16 @@ function CreatorModal({
                 <div className="mb-4 grid grid-cols-2 gap-2 text-xs">
                   {[
                     { highlight: true, label: "Token ID", value: token.tokenId },
-                    { label: "Type", value: "Creator Network Participation MOU" },
+                    { label: "Type", value: token.mouType },
                     { label: "Creator", value: token.creatorName },
                     { label: "Email", value: token.email },
                     { label: "Country", value: token.country || "-" },
                     { label: "Category", value: token.category || "-" },
-                    { label: "Channel", value: token.mainChannel || "-" },
+                    { label: "Main Channel", value: token.mainChannel || "-" },
+                    { label: "SNS Link", value: token.snsLink || "-" },
                     { label: "Goal", value: token.goal || "-" },
                     { label: "Region", value: token.region || "-" },
-                    { accent: true, label: "Status", value: "Pending Verification" },
+                    { accent: true, label: "Status", value: token.status },
                   ].map((item) => (
                     <div key={item.label}>
                       <p className="mb-0.5 text-white/30">{item.label}</p>
@@ -1168,31 +1241,45 @@ function CreatorModal({
 
                 <div className="mb-2 border-t border-white/5 pt-3">
                   <p className="mb-0.5 text-[10px] text-white/30">Document Hash (SHA-256)</p>
-                  <p className="break-all font-mono text-[10px] text-cyan-400/70">{token.hash}</p>
+                  <p className="break-all font-mono text-[10px] text-cyan-400/70">
+                    {token.documentHash}
+                  </p>
                 </div>
                 <div>
                   <p className="mb-0.5 text-[10px] text-white/30">Issued At</p>
                   <p className="text-xs text-white/60">{new Date(token.issuedAt).toLocaleString()}</p>
                 </div>
                 <div className="mt-4 border-t border-white/5 pt-3">
-                  <p className="text-[10px] text-white/25">
-                    This certificate verifies that the creator has signed a Creator Network Participation MOU and registered a Creator Passport in the Hitpick Creator Network.
-                  </p>
+                  <p className="mb-2 text-[10px] text-white/30">Route Summary</p>
+                  <div className="flex flex-wrap gap-2">
+                    {token.route.map((stepItem) => (
+                      <span
+                        className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-white/65"
+                        key={stepItem}
+                      >
+                        {stepItem}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-4 border-t border-white/5 pt-3">
+                  <p className="text-[10px] text-white/25">{CERTIFICATE_NOTICE}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <button
                   className={`flex flex-col items-center gap-1.5 rounded-xl border py-3 text-xs font-semibold transition-all ${
-                    emailSent
+                    token.emailSent
                       ? "border-green-500/25 bg-green-500/15 text-green-400"
                       : "border-purple-500/30 bg-purple-600/80 text-white hover:bg-purple-600"
                   }`}
-                  onClick={() => setEmailSent(true)}
+                  disabled={token.emailSent || isResending}
+                  onClick={token.emailSent ? undefined : resendEmail}
                   type="button"
                 >
-                  {emailSent ? <CheckCircle2 size={16} /> : <Mail size={16} />}
-                  {emailSent ? "Sent!" : "Send to Email"}
+                  {token.emailSent ? <CheckCircle2 size={16} /> : <Mail size={16} />}
+                  {token.emailSent ? "Email Sent" : isResending ? "Resending..." : "Resend Email"}
                 </button>
                 <button
                   className="flex flex-col items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 py-3 text-xs font-semibold text-white/70 transition-all hover:bg-white/10"
@@ -1209,6 +1296,12 @@ function CreatorModal({
                   Browse Opps
                 </button>
               </div>
+              {issueWarning ? <p className="mt-3 text-sm text-amber-300">{issueWarning}</p> : null}
+              <p className="mt-2 text-xs text-white/35">
+                User email: {token.emailSent ? "sent" : "pending"} / Admin email:{" "}
+                {token.adminEmailSent ? "sent" : "pending"}
+              </p>
+              {issueError ? <p className="mt-2 text-sm text-rose-300">{issueError}</p> : null}
             </div>
           ) : null}
         </motion.div>

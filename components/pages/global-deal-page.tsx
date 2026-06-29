@@ -28,6 +28,14 @@ import {
   networkCreatorTags,
   networkDistributionTags,
 } from "@/lib/make-site-data";
+import {
+  CERTIFICATE_NOTICE,
+  type GlobalDealFormData,
+  type GlobalDealIssuePayload,
+  type GlobalDealIssuedToken,
+  type MouIssueResponse,
+  type MouResendResponse,
+} from "@/lib/mou/types";
 
 type Market =
   | "Korea"
@@ -55,24 +63,6 @@ type Goal =
   | "Full Global Expansion"
   | "Partnership MOU";
 type ModalStep = "closed" | "form" | "mou" | "token";
-
-interface FormData {
-  companyName: string;
-  contactName: string;
-  country: string;
-  email: string;
-  website: string;
-}
-
-interface TokenData extends FormData {
-  category: Category;
-  goal: Goal;
-  hash: string;
-  issuedAt: string;
-  market: Market;
-  route: string[];
-  tokenId: string;
-}
 
 const categoryLabel: Record<Category, string> = {
   Beauty: "K-Beauty",
@@ -185,19 +175,6 @@ function generateRoute(market: Market, category: Category, goal: Goal): string[]
         "Global Partnership MOU",
       ];
   }
-}
-
-async function sha256(message: string): Promise<string> {
-  const buffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(message));
-
-  return Array.from(new Uint8Array(buffer))
-    .map((value) => value.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-function genTokenId() {
-  const sequence = String(Math.floor(Math.random() * 999999) + 1).padStart(6, "0");
-  return `HP-DEAL-${new Date().getFullYear()}-${sequence}`;
 }
 
 function CreatorWallHero({
@@ -808,7 +785,7 @@ function DealModal({
   onClose: () => void;
   step: ModalStep;
 }) {
-  const [form, setForm] = useState<FormData>({
+  const [form, setForm] = useState<GlobalDealFormData>({
     companyName: "",
     contactName: "",
     country: "",
@@ -816,9 +793,12 @@ function DealModal({
     website: "",
   });
   const [currentStep, setCurrentStep] = useState<"form" | "mou" | "token">("form");
-  const [token, setToken] = useState<TokenData | null>(null);
+  const [token, setToken] = useState<GlobalDealIssuedToken | null>(null);
   const [hasSignature, setHasSignature] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
+  const [isIssuing, setIsIssuing] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [issueError, setIssueError] = useState<string | null>(null);
+  const [issueWarning, setIssueWarning] = useState<string | null>(null);
 
   const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
@@ -828,7 +808,8 @@ function DealModal({
     if (step !== "closed") {
       setCurrentStep(step === "mou" ? "mou" : "form");
       setHasSignature(false);
-      setEmailSent(false);
+      setIssueError(null);
+      setIssueWarning(null);
       setToken(null);
     }
   }, [step]);
@@ -893,24 +874,103 @@ function DealModal({
     setHasSignature(false);
   };
 
-  const issueToken = async () => {
-    const id = genTokenId();
-    const now = new Date().toISOString();
-    const hash = await sha256(`${form.companyName}${form.email}${id}${now}`);
-    const route =
-      market && category && goal ? generateRoute(market, category, goal) : [];
+  const getSignatureImage = () => {
+    const canvas = signatureCanvasRef.current;
 
-    setToken({
-      ...form,
-      category: category as Category,
-      goal: goal as Goal,
-      hash,
-      issuedAt: now,
-      market: market as Market,
-      route,
-      tokenId: id,
-    });
-    setCurrentStep("token");
+    if (!canvas || !hasSignature) {
+      return null;
+    }
+
+    return canvas.toDataURL("image/png");
+  };
+
+  const issueToken = async () => {
+    const signatureImage = getSignatureImage();
+
+    if (!signatureImage) {
+      setIssueError("Please add your signature before issuing the token.");
+      return;
+    }
+
+    setIsIssuing(true);
+    setIssueError(null);
+    setIssueWarning(null);
+
+    try {
+      const payload: GlobalDealIssuePayload = {
+        formData: form,
+        route: market && category && goal ? generateRoute(market, category, goal) : [],
+        selections: {
+          category,
+          goal,
+          market,
+        },
+        signatureImage,
+        type: "global_deal",
+      };
+      const response = await fetch("/api/mou/issue", {
+        body: JSON.stringify(payload),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+      const result = (await response.json()) as MouIssueResponse;
+
+      if (!response.ok || !result.ok) {
+        throw new Error(result.ok ? "Unable to issue the token." : result.error);
+      }
+
+      setToken(result.token as GlobalDealIssuedToken);
+      setIssueWarning(result.warning ?? null);
+      setCurrentStep("token");
+    } catch (error) {
+      setIssueError(
+        error instanceof Error ? error.message : "Unable to issue the token right now.",
+      );
+    } finally {
+      setIsIssuing(false);
+    }
+  };
+
+  const resendEmail = async () => {
+    if (!token) {
+      return;
+    }
+
+    setIsResending(true);
+    setIssueError(null);
+
+    try {
+      const response = await fetch("/api/mou/resend", {
+        body: JSON.stringify({ submissionId: token.submissionId }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+      const result = (await response.json()) as MouResendResponse;
+
+      if (!response.ok || !result.ok) {
+        throw new Error(result.ok ? "Unable to resend the email." : result.error);
+      }
+
+      setToken((previous) =>
+        previous
+          ? {
+              ...previous,
+              adminEmailSent: result.adminEmailSent,
+              emailSent: result.emailSent,
+            }
+          : previous,
+      );
+    } catch (error) {
+      setIssueError(
+        error instanceof Error ? error.message : "Unable to resend the email right now.",
+      );
+    } finally {
+      setIsResending(false);
+    }
   };
 
   if (step === "closed") {
@@ -1005,7 +1065,7 @@ function DealModal({
                       }))
                     }
                     placeholder={field.placeholder}
-                    value={form[field.key as keyof FormData]}
+                    value={form[field.key as keyof GlobalDealFormData]}
                   />
                 ))}
               </div>
@@ -1125,12 +1185,13 @@ function DealModal({
 
               <button
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 py-3.5 text-sm font-bold text-white transition-all hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-30"
-                disabled={!hasSignature}
+                disabled={!hasSignature || isIssuing}
                 onClick={issueToken}
                 type="button"
               >
-                <Award size={15} /> Issue Global Deal Token
+                <Award size={15} /> {isIssuing ? "Issuing Token..." : "Issue Global Deal Token"}
               </button>
+              {issueError ? <p className="mt-3 text-sm text-rose-300">{issueError}</p> : null}
             </div>
           ) : null}
 
@@ -1148,7 +1209,7 @@ function DealModal({
                     Global Deal Token Issued
                   </h3>
                   <p className="text-xs text-white/40">
-                    Your partnership MOU has been signed and verified.
+                    Your partnership MOU has been issued from the server and stored in Hitpick.
                   </p>
                 </div>
               </div>
@@ -1183,15 +1244,16 @@ function DealModal({
                 <div className="mb-4 grid grid-cols-2 gap-2 text-xs">
                   {[
                     { highlight: true, label: "Token ID", value: token.tokenId },
-                    { label: "Type", value: "Global Partnership Interest MOU" },
+                    { label: "Type", value: token.mouType },
                     { label: "Company", value: token.companyName },
                     { label: "Contact", value: token.contactName },
                     { label: "Email", value: token.email },
                     { label: "Country", value: token.country || "-" },
+                    { label: "Website", value: token.website || "-" },
                     { label: "Target Market", value: token.market || "-" },
                     { label: "Category", value: token.category || "-" },
                     { label: "Launch Goal", value: token.goal || "-" },
-                    { green: true, label: "Status", value: "Verified" },
+                    { green: true, label: "Status", value: token.status },
                   ].map((item) => (
                     <div key={item.label}>
                       <p className="mb-0.5 text-white/30">{item.label}</p>
@@ -1212,7 +1274,9 @@ function DealModal({
 
                 <div className="border-t border-white/5 pt-3">
                   <p className="mb-0.5 text-[10px] text-white/30">Document Hash (SHA-256)</p>
-                  <p className="break-all font-mono text-[10px] text-cyan-400/70">{token.hash}</p>
+                  <p className="break-all font-mono text-[10px] text-cyan-400/70">
+                    {token.documentHash}
+                  </p>
                 </div>
                 <div className="mt-2">
                   <p className="mb-0.5 text-[10px] text-white/30">Issued At</p>
@@ -1220,20 +1284,37 @@ function DealModal({
                     {new Date(token.issuedAt).toLocaleString()}
                   </p>
                 </div>
+                <div className="mt-4 border-t border-white/5 pt-3">
+                  <p className="mb-2 text-[10px] text-white/30">Route Summary</p>
+                  <div className="flex flex-wrap gap-2">
+                    {token.route.map((stepItem) => (
+                      <span
+                        className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-white/65"
+                        key={stepItem}
+                      >
+                        {stepItem}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-4 border-t border-white/5 pt-3">
+                  <p className="text-[10px] leading-relaxed text-white/25">{CERTIFICATE_NOTICE}</p>
+                </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <button
                   className={`flex flex-col items-center gap-1.5 rounded-xl border py-3 text-xs font-semibold transition-all ${
-                    emailSent
+                    token.emailSent
                       ? "border-green-500/25 bg-green-500/15 text-green-400"
                       : "border-blue-500/30 bg-blue-600/80 text-white hover:bg-blue-600"
                   }`}
-                  onClick={() => setEmailSent(true)}
+                  disabled={token.emailSent || isResending}
+                  onClick={token.emailSent ? undefined : resendEmail}
                   type="button"
                 >
-                  {emailSent ? <CheckCircle2 size={16} /> : <Mail size={16} />}
-                  {emailSent ? "Sent!" : "Send to Email"}
+                  {token.emailSent ? <CheckCircle2 size={16} /> : <Mail size={16} />}
+                  {token.emailSent ? "Email Sent" : isResending ? "Resending..." : "Resend Email"}
                 </button>
                 <button
                   className="flex flex-col items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 py-3 text-xs font-semibold text-white/70 transition-all hover:bg-white/10"
@@ -1250,6 +1331,12 @@ function DealModal({
                   Deal Room
                 </button>
               </div>
+              {issueWarning ? <p className="mt-3 text-sm text-amber-300">{issueWarning}</p> : null}
+              <p className="mt-2 text-xs text-white/35">
+                User email: {token.emailSent ? "sent" : "pending"} / Admin email:{" "}
+                {token.adminEmailSent ? "sent" : "pending"}
+              </p>
+              {issueError ? <p className="mt-2 text-sm text-rose-300">{issueError}</p> : null}
             </div>
           ) : null}
         </motion.div>
