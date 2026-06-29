@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import { AnimatePresence, motion } from "motion/react";
 import {
@@ -21,6 +21,7 @@ import {
 
 import { MakeAssetImage } from "@/components/make-asset-image";
 import { MakeIcon } from "@/components/make-icon";
+import { MouBlockchainSummary } from "@/components/mou-blockchain-summary";
 import {
   globalDealCreatorCards,
   globalDealTrustStats,
@@ -792,7 +793,9 @@ function DealModal({
     email: "",
     website: "",
   });
-  const [currentStep, setCurrentStep] = useState<"form" | "mou" | "token">("form");
+  const [currentStep, setCurrentStep] = useState<"form" | "mou" | "token">(
+    step === "mou" ? "mou" : "form",
+  );
   const [token, setToken] = useState<GlobalDealIssuedToken | null>(null);
   const [hasSignature, setHasSignature] = useState(false);
   const [isIssuing, setIsIssuing] = useState(false);
@@ -803,16 +806,6 @@ function DealModal({
   const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
   const lastPosition = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    if (step !== "closed") {
-      setCurrentStep(step === "mou" ? "mou" : "form");
-      setHasSignature(false);
-      setIssueError(null);
-      setIssueWarning(null);
-      setToken(null);
-    }
-  }, [step]);
 
   const getPosition = (event: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
@@ -1299,6 +1292,7 @@ function DealModal({
                     ))}
                   </div>
                 </div>
+                <MouBlockchainSummary blockchain={token.blockchain} tone="amber" />
                 <div className="mt-4 border-t border-white/5 pt-3">
                   <p className="text-[10px] leading-relaxed text-white/25">{CERTIFICATE_NOTICE}</p>
                 </div>
@@ -1403,6 +1397,7 @@ export function GlobalDealPage() {
       <DealModal
         category={category}
         goal={goal}
+        key={modalStep}
         market={market}
         onClose={() => setModalStep("closed")}
         step={modalStep}

@@ -5,8 +5,10 @@ import { createHash, randomInt } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 
+import { anchorMouProofOnChain } from "@/lib/blockchain/server";
 import {
   CERTIFICATE_NOTICE,
+  type MouBlockchainReceipt,
   type CreatorFormData,
   type CreatorIssuePayload,
   type CreatorIssuedToken,
@@ -25,7 +27,12 @@ type JsonObject = Record<string, unknown>;
 
 type DbSubmissionRow = {
   admin_email_sent: boolean | null;
+  anchored_at: string | null;
+  anchor_error: string | null;
+  block_number: number | null;
+  blockchain_status: "anchored" | "failed" | "not_configured";
   category: string | null;
+  chain_id: number | null;
   company_name: string | null;
   contact_name: string | null;
   country: string | null;
@@ -40,16 +47,23 @@ type DbSubmissionRow = {
   main_channel: string | null;
   market: string | null;
   mou_type: string;
+  network_name: string | null;
   name: string | null;
   proof_type: ProofType;
+  proof_key: string | null;
   raw_payload: unknown;
+  registry_address: string | null;
   region: string | null;
   route: unknown;
+  route_hash: string | null;
   signature_hash: string | null;
   signature_url: string | null;
   sns_link: string | null;
   status: string;
+  subject_hash: string | null;
   token_id: string;
+  transaction_hash: string | null;
+  transaction_url: string | null;
   type: MouSubmissionType;
   updated_at: string;
   website: string | null;
@@ -57,6 +71,7 @@ type DbSubmissionRow = {
 
 type SubmissionRecord = {
   adminEmailSent: boolean;
+  blockchain: MouBlockchainReceipt;
   category: string;
   companyName: string;
   contactName: string;
@@ -145,6 +160,23 @@ function getRequiredEnv(name: string) {
 function getOptionalEnv(name: string) {
   const value = process.env[name]?.trim();
   return value ? value : null;
+}
+
+function createDefaultBlockchainReceipt(): MouBlockchainReceipt {
+  return {
+    anchoredAt: null,
+    blockNumber: null,
+    chainId: null,
+    error: null,
+    networkName: null,
+    proofKey: null,
+    registryAddress: null,
+    routeHash: null,
+    status: "not_configured",
+    subjectHash: null,
+    transactionHash: null,
+    transactionUrl: null,
+  };
 }
 
 function getServices(): ResolvedServices {
@@ -363,6 +395,18 @@ function formatIssuedAt(value: string) {
   });
 }
 
+function describeBlockchainStatus(blockchain: MouBlockchainReceipt) {
+  if (blockchain.status === "anchored") {
+    return "Anchored on-chain";
+  }
+
+  if (blockchain.status === "failed") {
+    return `Anchor failed${blockchain.error ? `: ${blockchain.error}` : ""}`;
+  }
+
+  return "Not configured";
+}
+
 function buildFieldTable(fields: Array<{ label: string; value: string }>) {
   return fields
     .map(
@@ -401,6 +445,7 @@ function buildEmailMessage(record: SubmissionRecord, audience: "user" | "admin")
           { label: "Route Summary", value: toRouteSummary(record.route) },
           { label: "Document Hash", value: record.documentHash },
           { label: "Issued At", value: formatIssuedAt(record.issuedAt) },
+          { label: "Blockchain", value: describeBlockchainStatus(record.blockchain) },
         ]
       : [
           { label: "Token ID", value: record.tokenId },
@@ -416,7 +461,17 @@ function buildEmailMessage(record: SubmissionRecord, audience: "user" | "admin")
           { label: "Route Summary", value: toRouteSummary(record.route) },
           { label: "Document Hash", value: record.documentHash },
           { label: "Issued At", value: formatIssuedAt(record.issuedAt) },
+          { label: "Blockchain", value: describeBlockchainStatus(record.blockchain) },
         ];
+  const blockchainFields =
+    record.blockchain.status === "anchored"
+      ? [
+          { label: "Network", value: record.blockchain.networkName || "-" },
+          { label: "Chain ID", value: String(record.blockchain.chainId ?? "-") },
+          { label: "Registry", value: record.blockchain.registryAddress || "-" },
+          { label: "Transaction Hash", value: record.blockchain.transactionHash || "-" },
+        ]
+      : [];
   const title =
     record.type === "global_deal"
       ? "Hitpick Global Deal Token"
@@ -434,7 +489,7 @@ function buildEmailMessage(record: SubmissionRecord, audience: "user" | "admin")
             ${escapeHtml(audience === "admin" ? adminIntro : intro)}
           </p>
           <table style="width:100%;border-collapse:collapse;">
-            ${buildFieldTable(fields)}
+            ${buildFieldTable([...fields, ...blockchainFields])}
           </table>
           <div style="margin-top:24px;padding-top:18px;border-top:1px solid rgba(148,163,184,0.18);">
             <p style="margin:0;color:#94a3b8;font-size:12px;line-height:1.7;">${escapeHtml(CERTIFICATE_NOTICE)}</p>
@@ -450,6 +505,7 @@ function buildEmailMessage(record: SubmissionRecord, audience: "user" | "admin")
       audience === "admin" ? adminIntro : intro,
       "",
       ...fields.map((field) => `${field.label}: ${field.value || "-"}`),
+      ...blockchainFields.map((field) => `${field.label}: ${field.value || "-"}`),
       "",
       CERTIFICATE_NOTICE,
     ].join("\n"),
@@ -515,6 +571,7 @@ function buildSubmissionRecord(
 
     return {
       adminEmailSent: false,
+      blockchain: createDefaultBlockchainReceipt(),
       category: selections.category,
       companyName: formData.companyName,
       contactName: formData.contactName,
@@ -568,6 +625,7 @@ function buildSubmissionRecord(
 
   return {
     adminEmailSent: false,
+    blockchain: createDefaultBlockchainReceipt(),
     category: selections.category,
     companyName: "",
     contactName: "",
@@ -606,7 +664,12 @@ function buildSubmissionRecord(
 function toInsertRow(record: SubmissionRecord) {
   return {
     admin_email_sent: record.adminEmailSent,
+    anchored_at: record.blockchain.anchoredAt,
+    anchor_error: record.blockchain.error,
+    block_number: record.blockchain.blockNumber,
+    blockchain_status: record.blockchain.status,
     category: record.category || null,
+    chain_id: record.blockchain.chainId,
     company_name: record.companyName || null,
     contact_name: record.contactName || null,
     country: record.country || null,
@@ -619,16 +682,23 @@ function toInsertRow(record: SubmissionRecord) {
     main_channel: record.mainChannel || null,
     market: record.market || null,
     mou_type: record.mouType,
+    network_name: record.blockchain.networkName,
     name: record.name || null,
     proof_type: record.proofType,
+    proof_key: record.blockchain.proofKey,
     raw_payload: record.rawPayload,
+    registry_address: record.blockchain.registryAddress,
     region: record.region || null,
     route: record.route,
+    route_hash: record.blockchain.routeHash,
     signature_hash: record.signatureHash,
     signature_url: record.signatureUrl,
     sns_link: record.snsLink || null,
     status: record.status,
+    subject_hash: record.blockchain.subjectHash,
     token_id: record.tokenId,
+    transaction_hash: record.blockchain.transactionHash,
+    transaction_url: record.blockchain.transactionUrl,
     type: record.type,
     updated_at: new Date().toISOString(),
     website: record.website || null,
@@ -668,6 +738,35 @@ async function updateEmailStatus(
 
   if (error) {
     throw new Error(`Failed to update email status: ${error.message}`);
+  }
+}
+
+async function updateBlockchainReceipt(
+  services: ResolvedServices,
+  submissionId: string,
+  blockchain: MouBlockchainReceipt,
+) {
+  const { error } = await services.supabase
+    .from("mou_submissions")
+    .update({
+      anchored_at: blockchain.anchoredAt,
+      anchor_error: blockchain.error,
+      block_number: blockchain.blockNumber,
+      blockchain_status: blockchain.status,
+      chain_id: blockchain.chainId,
+      network_name: blockchain.networkName,
+      proof_key: blockchain.proofKey,
+      registry_address: blockchain.registryAddress,
+      route_hash: blockchain.routeHash,
+      subject_hash: blockchain.subjectHash,
+      transaction_hash: blockchain.transactionHash,
+      transaction_url: blockchain.transactionUrl,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", submissionId);
+
+  if (error) {
+    throw new Error(`Failed to update blockchain status: ${error.message}`);
   }
 }
 
@@ -722,6 +821,20 @@ function normalizeJson(value: unknown): JsonObject {
 function fromDbRow(row: DbSubmissionRow): SubmissionRecord {
   return {
     adminEmailSent: Boolean(row.admin_email_sent),
+    blockchain: {
+      anchoredAt: row.anchored_at,
+      blockNumber: row.block_number,
+      chainId: row.chain_id,
+      error: row.anchor_error,
+      networkName: row.network_name,
+      proofKey: row.proof_key,
+      registryAddress: row.registry_address,
+      routeHash: row.route_hash,
+      status: row.blockchain_status ?? "not_configured",
+      subjectHash: row.subject_hash,
+      transactionHash: row.transaction_hash,
+      transactionUrl: row.transaction_url,
+    },
     category: row.category ?? "",
     companyName: row.company_name ?? "",
     contactName: row.contact_name ?? "",
@@ -766,6 +879,7 @@ function toIssuedToken(record: SubmissionRecord): IssuedMouToken {
       : {};
   const base = {
     adminEmailSent: record.adminEmailSent,
+    blockchain: record.blockchain,
     documentHash: record.documentHash,
     emailSent: record.emailSent,
     issuedAt: record.issuedAt,
@@ -813,6 +927,42 @@ function toIssuedToken(record: SubmissionRecord): IssuedMouToken {
   } satisfies CreatorIssuedToken;
 }
 
+function createBlockchainSubjectSummary(record: SubmissionRecord) {
+  if (record.type === "global_deal") {
+    return [record.companyName, record.contactName, record.email, record.tokenId].join("|");
+  }
+
+  return [record.creatorName, record.email, record.mainChannel, record.tokenId].join("|");
+}
+
+function buildIssueWarning(
+  blockchain: MouBlockchainReceipt,
+  emailConfigured: boolean,
+  delivery: EmailDeliveryStatus,
+) {
+  const warnings: string[] = [];
+
+  if (blockchain.status === "not_configured") {
+    warnings.push(
+      "Blockchain anchoring is skipped until BLOCKCHAIN_RPC_URL, BLOCKCHAIN_PRIVATE_KEY, and MOU_REGISTRY_ADDRESS are configured.",
+    );
+  } else if (blockchain.status === "failed") {
+    warnings.push(
+      `Blockchain anchoring failed${blockchain.error ? `: ${blockchain.error}` : "."}`,
+    );
+  }
+
+  if (!emailConfigured) {
+    warnings.push(
+      "Email delivery is skipped until RESEND_API_KEY, EMAIL_FROM, and ADMIN_EMAIL are configured.",
+    );
+  } else if (!delivery.emailSent || !delivery.adminEmailSent) {
+    warnings.push("One or more email deliveries need attention.");
+  }
+
+  return warnings.length > 0 ? `Token issued and saved to Supabase. ${warnings.join(" ")}` : undefined;
+}
+
 export async function issueMouSubmission(input: unknown): Promise<IssueResult> {
   const payload = parseIssuePayload(input);
   const services = getServices();
@@ -825,24 +975,33 @@ export async function issueMouSubmission(input: unknown): Promise<IssueResult> {
     tokenId,
   );
   const insertedRecord = await insertSubmission(services, draftRecord);
-  const delivery = await sendEmails(services, insertedRecord);
+  const blockchain = await anchorMouProofOnChain({
+    documentHash: insertedRecord.documentHash,
+    issuedAt: insertedRecord.issuedAt,
+    mouType: insertedRecord.mouType,
+    proofType: insertedRecord.proofType,
+    route: insertedRecord.route,
+    subjectSummary: createBlockchainSubjectSummary(insertedRecord),
+    tokenId: insertedRecord.tokenId,
+  });
+  await updateBlockchainReceipt(services, insertedRecord.id, blockchain);
+  const anchoredRecord: SubmissionRecord = {
+    ...insertedRecord,
+    blockchain,
+  };
+  const delivery = await sendEmails(services, anchoredRecord);
 
   await updateEmailStatus(services, insertedRecord.id, delivery);
 
   const finalRecord: SubmissionRecord = {
-    ...insertedRecord,
+    ...anchoredRecord,
     ...delivery,
   };
   const emailConfigured = Boolean(services.email);
 
   return {
     token: toIssuedToken(finalRecord),
-    warning:
-      !emailConfigured
-        ? "Token issued and saved to Supabase. Email delivery is skipped until RESEND_API_KEY, EMAIL_FROM, and ADMIN_EMAIL are configured."
-        : delivery.emailSent && delivery.adminEmailSent
-          ? undefined
-          : "Token issued, but one or more email deliveries need attention.",
+    warning: buildIssueWarning(blockchain, emailConfigured, delivery),
   };
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import { AnimatePresence, motion } from "motion/react";
 import {
@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { MakeAssetImage } from "@/components/make-asset-image";
+import { MouBlockchainSummary } from "@/components/mou-blockchain-summary";
 import {
   creatorChips,
   creatorFlowSteps,
@@ -745,7 +746,9 @@ function CreatorModal({
     shortBio: "",
     snsLink: "",
   });
-  const [currentStep, setCurrentStep] = useState<"form" | "mou" | "token">("form");
+  const [currentStep, setCurrentStep] = useState<"form" | "mou" | "token">(
+    step === "mou" ? "mou" : "form",
+  );
   const [token, setToken] = useState<CreatorIssuedToken | null>(null);
   const [hasSignature, setHasSignature] = useState(false);
   const [isIssuing, setIsIssuing] = useState(false);
@@ -756,20 +759,6 @@ function CreatorModal({
   const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
   const lastPosition = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    if (step !== "closed") {
-      setCurrentStep(step === "mou" ? "mou" : "form");
-      setHasSignature(false);
-      setIssueError(null);
-      setIssueWarning(null);
-      setToken(null);
-      setForm((previous) => ({
-        ...previous,
-        mainChannel: previous.mainChannel || channel || "",
-      }));
-    }
-  }, [channel, step]);
 
   const getPosition = (event: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
@@ -1264,6 +1253,7 @@ function CreatorModal({
                     ))}
                   </div>
                 </div>
+                <MouBlockchainSummary blockchain={token.blockchain} tone="violet" />
                 <div className="mt-4 border-t border-white/5 pt-3">
                   <p className="text-[10px] text-white/25">{CERTIFICATE_NOTICE}</p>
                 </div>
@@ -1370,6 +1360,7 @@ export function CreatorOpportunityPage() {
         category={category}
         channel={channel}
         goal={goal}
+        key={modalStep}
         onClose={() => setModalStep("closed")}
         region={region}
         step={modalStep}

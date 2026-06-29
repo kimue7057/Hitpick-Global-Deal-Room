@@ -34,6 +34,23 @@ export interface CreatorSelections {
   region: string;
 }
 
+export type MouBlockchainStatus = "anchored" | "failed" | "not_configured";
+
+export interface MouBlockchainReceipt {
+  anchoredAt: string | null;
+  blockNumber: number | null;
+  chainId: number | null;
+  error: string | null;
+  networkName: string | null;
+  proofKey: string | null;
+  registryAddress: string | null;
+  routeHash: string | null;
+  status: MouBlockchainStatus;
+  subjectHash: string | null;
+  transactionHash: string | null;
+  transactionUrl: string | null;
+}
+
 interface BaseIssuePayload<TType extends MouSubmissionType> {
   route: string[];
   signatureImage: string;
@@ -54,6 +71,7 @@ export type MouIssuePayload = GlobalDealIssuePayload | CreatorIssuePayload;
 
 interface BaseIssuedToken<TType extends MouSubmissionType, TProofType extends ProofType> {
   adminEmailSent: boolean;
+  blockchain: MouBlockchainReceipt;
   documentHash: string;
   emailSent: boolean;
   issuedAt: string;

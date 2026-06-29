@@ -21,7 +21,6 @@ export function SiteHeader() {
   }, []);
 
   useEffect(() => {
-    setOpen(false);
     window.scrollTo({ top: 0, behavior: "auto" });
   }, [pathname]);
 
@@ -34,7 +33,7 @@ export function SiteHeader() {
       }`}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-        <Link className="flex shrink-0 items-center" href="/">
+        <Link className="flex shrink-0 items-center" href="/" onClick={() => setOpen(false)}>
           <img
             alt="Hit Deal Room"
             className="h-11 w-auto"
@@ -53,6 +52,7 @@ export function SiteHeader() {
               }`}
               href={link.href}
               key={link.href}
+              onClick={() => setOpen(false)}
             >
               {link.label}
             </Link>
@@ -63,6 +63,7 @@ export function SiteHeader() {
           <Link
             className="flex items-center gap-2 rounded-full bg-[#7700ff] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#6600ee]"
             href="/global-deal"
+            onClick={() => setOpen(false)}
           >
             Build Global Deal <ArrowRight size={13} />
           </Link>
@@ -93,6 +94,7 @@ export function SiteHeader() {
                 }`}
                 href={link.href}
                 key={link.href}
+                onClick={() => setOpen(false)}
               >
                 {link.label}
               </Link>
@@ -100,6 +102,7 @@ export function SiteHeader() {
             <Link
               className="mt-4 flex items-center justify-center gap-2 rounded-full bg-[#7700ff] px-5 py-3 text-sm font-bold text-white"
               href="/global-deal"
+              onClick={() => setOpen(false)}
             >
               Build Global Deal <ArrowRight size={13} />
             </Link>
