@@ -69,6 +69,10 @@ export const makeImageAssets = {
   logoWordmark: "/images/make/hit-deal-room-logo.png",
 } as const;
 
+function makeReferencePhoto(imageId: string, width: number, height: number) {
+  return `https://images.unsplash.com/${imageId}?w=${width}&h=${height}&fit=crop&auto=format`;
+}
+
 export const navigationItems: NavItem[] = [
   { href: "/", label: "Home" },
   { href: "/global-deal", label: "Global Deal" },
@@ -94,10 +98,10 @@ export const footerColumns = [
 export const globalDealCreatorCards: GlobalDealVisualCard[] = [
   {
     asset: {
-      alt: "Launch Your Brand Creator-Led Commerce banner",
+      alt: "Beauty creator campaign portrait",
       backgroundClassName: "bg-[#06070d]",
-      fit: "contain",
-      src: makeImageAssets.heroBanner,
+      fit: "cover",
+      src: makeReferencePhoto("photo-1557002665-c552e1832483", 400, 600),
     },
     category: "Beauty Creator",
     color: "#ec4899",
@@ -107,10 +111,10 @@ export const globalDealCreatorCards: GlobalDealVisualCard[] = [
   },
   {
     asset: {
-      alt: "Hit logo mark",
+      alt: "Lifestyle creator collaboration portrait",
       backgroundClassName: "bg-[#120922]",
-      fit: "contain",
-      src: makeImageAssets.logoMark,
+      fit: "cover",
+      src: makeReferencePhoto("photo-1695753640148-0c7b3bcd3b2b", 400, 600),
     },
     category: "Lifestyle Creator",
     color: "#8b5cf6",
@@ -121,10 +125,10 @@ export const globalDealCreatorCards: GlobalDealVisualCard[] = [
   },
   {
     asset: {
-      alt: "Launch Your Brand Creator-Led Commerce banner",
+      alt: "Food creator portrait",
       backgroundClassName: "bg-[#06070d]",
-      fit: "contain",
-      src: makeImageAssets.heroBanner,
+      fit: "cover",
+      src: makeReferencePhoto("photo-1548809685-e3831a2aaa5f", 400, 600),
     },
     category: "Food Creator",
     color: "#f59e0b",
@@ -134,10 +138,10 @@ export const globalDealCreatorCards: GlobalDealVisualCard[] = [
   },
   {
     asset: {
-      alt: "Hit Deal Room wordmark",
+      alt: "Short-form creator portrait",
       backgroundClassName: "bg-[#05060b]",
-      fit: "contain",
-      src: makeImageAssets.logoWordmark,
+      fit: "cover",
+      src: makeReferencePhoto("photo-1609375358560-3781c23ca756", 400, 600),
     },
     category: "Short-form Creator",
     color: "#06b6d4",
@@ -147,10 +151,10 @@ export const globalDealCreatorCards: GlobalDealVisualCard[] = [
   },
   {
     asset: {
-      alt: "Launch Your Brand Creator-Led Commerce banner",
+      alt: "Fashion creator portrait",
       backgroundClassName: "bg-[#06070d]",
-      fit: "contain",
-      src: makeImageAssets.heroBanner,
+      fit: "cover",
+      src: makeReferencePhoto("photo-1542062700-9b61ccbc1696", 400, 600),
     },
     category: "Fashion Creator",
     color: "#3b82f6",
@@ -161,10 +165,10 @@ export const globalDealCreatorCards: GlobalDealVisualCard[] = [
   },
   {
     asset: {
-      alt: "Hit logo mark",
+      alt: "Travel creator portrait",
       backgroundClassName: "bg-[#0b0716]",
-      fit: "contain",
-      src: makeImageAssets.logoMark,
+      fit: "cover",
+      src: makeReferencePhoto("photo-1651659802541-774e231b05ed", 400, 600),
     },
     category: "Travel Creator",
     color: "#10b981",
@@ -253,10 +257,10 @@ export const networkDistributionTags = [
 export const creatorRailCards: CreatorRailCard[] = [
   {
     asset: {
-      alt: "Launch Your Brand Creator-Led Commerce banner",
+      alt: "Beauty review creator portrait",
       backgroundClassName: "bg-[#06070d]",
-      fit: "contain",
-      src: makeImageAssets.heroBanner,
+      fit: "cover",
+      src: makeReferencePhoto("photo-1779398261284-95f329a7ce96", 360, 540),
     },
     color: "#ec4899",
     height: 340,
@@ -265,10 +269,10 @@ export const creatorRailCards: CreatorRailCard[] = [
   },
   {
     asset: {
-      alt: "Hit Deal Room wordmark",
+      alt: "Brand campaign creator portrait",
       backgroundClassName: "bg-[#07080d]",
-      fit: "contain",
-      src: makeImageAssets.logoWordmark,
+      fit: "cover",
+      src: makeReferencePhoto("photo-1628453099013-8c016c682af6", 360, 540),
     },
     color: "#3b82f6",
     height: 300,
@@ -277,10 +281,10 @@ export const creatorRailCards: CreatorRailCard[] = [
   },
   {
     asset: {
-      alt: "Hit logo mark on dark background",
+      alt: "Korean creator collaboration portrait",
       backgroundClassName: "bg-[#120922]",
-      fit: "contain",
-      src: makeImageAssets.logoMark,
+      fit: "cover",
+      src: makeReferencePhoto("photo-1695753640148-0c7b3bcd3b2b", 360, 540),
     },
     color: "#8b5cf6",
     height: 360,
@@ -289,10 +293,10 @@ export const creatorRailCards: CreatorRailCard[] = [
   },
   {
     asset: {
-      alt: "Launch Your Brand Creator-Led Commerce banner",
+      alt: "Food content creator portrait",
       backgroundClassName: "bg-[#06070d]",
-      fit: "contain",
-      src: makeImageAssets.heroBanner,
+      fit: "cover",
+      src: makeReferencePhoto("photo-1694813646506-135688fc24e4", 360, 540),
     },
     color: "#f59e0b",
     height: 310,
@@ -301,10 +305,10 @@ export const creatorRailCards: CreatorRailCard[] = [
   },
   {
     asset: {
-      alt: "Launch Your Brand Creator-Led Commerce banner",
+      alt: "Travel vlog creator portrait",
       backgroundClassName: "bg-[#06070d]",
-      fit: "contain",
-      src: makeImageAssets.heroBanner,
+      fit: "cover",
+      src: makeReferencePhoto("photo-1708384761254-32964bd16c49", 360, 540),
     },
     color: "#10b981",
     height: 340,
@@ -313,10 +317,10 @@ export const creatorRailCards: CreatorRailCard[] = [
   },
   {
     asset: {
-      alt: "Hit Deal Room wordmark",
+      alt: "Fashion creator collaboration portrait",
       backgroundClassName: "bg-[#05060b]",
-      fit: "contain",
-      src: makeImageAssets.logoWordmark,
+      fit: "cover",
+      src: makeReferencePhoto("photo-1542062700-9b61ccbc1696", 360, 540),
     },
     color: "#06b6d4",
     height: 300,
@@ -325,10 +329,10 @@ export const creatorRailCards: CreatorRailCard[] = [
   },
   {
     asset: {
-      alt: "Hit logo mark",
+      alt: "Product review creator portrait",
       backgroundClassName: "bg-[#120922]",
-      fit: "contain",
-      src: makeImageAssets.logoMark,
+      fit: "cover",
+      src: makeReferencePhoto("photo-1617221081121-931fde66048c", 360, 540),
     },
     color: "#a855f7",
     height: 350,
@@ -337,10 +341,10 @@ export const creatorRailCards: CreatorRailCard[] = [
   },
   {
     asset: {
-      alt: "Launch Your Brand Creator-Led Commerce banner",
+      alt: "Offline event creator portrait",
       backgroundClassName: "bg-[#06070d]",
-      fit: "contain",
-      src: makeImageAssets.heroBanner,
+      fit: "cover",
+      src: makeReferencePhoto("photo-1651659802541-774e231b05ed", 360, 540),
     },
     color: "#f97316",
     height: 320,
