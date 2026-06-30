@@ -966,6 +966,27 @@ function DealModal({
     }
   };
 
+  const downloadCertificate = () => {
+    if (!token) {
+      return;
+    }
+
+    const anchor = document.createElement("a");
+    anchor.href = `/api/mou/certificate/${token.submissionId}`;
+    anchor.rel = "noreferrer";
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+  };
+
+  const openDealRoom = () => {
+    if (!token) {
+      return;
+    }
+
+    window.open(`/deal-room/${token.submissionId}`, "_blank", "noopener,noreferrer");
+  };
+
   const emailUnavailable = issueWarning?.includes("Email delivery is skipped") ?? false;
 
   if (step === "closed") {
@@ -1320,6 +1341,7 @@ function DealModal({
                 </button>
                 <button
                   className="flex flex-col items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 py-3 text-xs font-semibold text-white/70 transition-all hover:bg-white/10"
+                  onClick={downloadCertificate}
                   type="button"
                 >
                   <Download size={16} />
@@ -1327,6 +1349,7 @@ function DealModal({
                 </button>
                 <button
                   className="flex flex-col items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 py-3 text-xs font-semibold text-white/70 transition-all hover:bg-white/10"
+                  onClick={openDealRoom}
                   type="button"
                 >
                   <ExternalLink size={16} />

@@ -1039,3 +1039,12 @@ export async function resendMouEmails(input: unknown): Promise<ResendResult> {
 
   return delivery;
 }
+
+export async function getIssuedMouTokenBySubmissionId(
+  submissionId: string,
+): Promise<IssuedMouToken> {
+  const services = getServices();
+  const record = await findSubmissionById(services, submissionId);
+
+  return toIssuedToken(record);
+}
