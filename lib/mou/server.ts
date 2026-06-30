@@ -250,7 +250,16 @@ function sanitizeRoute(type: MouSubmissionType, route: string[]) {
 }
 
 function normalizeMembershipCopy(value: string) {
-  return value.replaceAll("MOU", "Membership");
+  const normalized = value
+    .replaceAll("Global Partnership Interest MOU", "Global Partnership Membership")
+    .replaceAll("Creator Network Participation MOU", "Creator Network Membership")
+    .replaceAll("Long-term MOU", "Long-term Membership")
+    .replaceAll("Creator MOU", "Creator Membership")
+    .replaceAll("Partnership MOU", "Partnership Membership")
+    .replaceAll("Global Partnership MOU", "Global Partnership Membership")
+    .replaceAll("MOU", "Membership");
+
+  return normalized;
 }
 
 function isValidEmail(value: string) {
