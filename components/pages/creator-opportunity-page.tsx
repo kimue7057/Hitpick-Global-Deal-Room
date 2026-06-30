@@ -152,7 +152,7 @@ function generateRoute(
         `${region} Brand Exposure`,
         `${primaryChannel} Brand Campaign`,
         "Collaboration Proposal",
-        "Creator MOU",
+        "Creator Membership",
         "Creator Token",
       ];
     case "Korean Creator Collab":
@@ -162,7 +162,7 @@ function generateRoute(
         "Joint Content Planning",
         `${primaryChannel} Co-creation`,
         "Brand Partnership Opportunity",
-        "Creator MOU",
+        "Creator Membership",
         "Creator Token",
       ];
     case "Expose My Content":
@@ -172,7 +172,7 @@ function generateRoute(
         "Brand Discovery Pool",
         "Company Review",
         "Campaign Opportunity",
-        "Creator MOU",
+        "Creator Membership",
         "Creator Token",
       ];
     case "Create Content Together":
@@ -182,7 +182,7 @@ function generateRoute(
         `${region} Co-creation`,
         `${primaryChannel} Campaign`,
         "Brand Exposure",
-        "Creator MOU",
+        "Creator Membership",
         "Creator Token",
       ];
     case "Product Review":
@@ -192,7 +192,7 @@ function generateRoute(
         "Sample Delivery",
         `${primaryChannel} Review Content`,
         "Campaign Report",
-        "Creator MOU",
+        "Creator Membership",
         "Creator Token",
       ];
     case "Offline Event":
@@ -202,7 +202,7 @@ function generateRoute(
         `${region} Offline Event`,
         "On-site Content",
         "Brand Networking",
-        "Creator MOU",
+        "Creator Membership",
         "Creator Token",
       ];
     case "Global Campaign":
@@ -212,7 +212,7 @@ function generateRoute(
         `${region} Campaign`,
         `${primaryChannel} Campaign Brief`,
         "Campaign Activation",
-        "Creator MOU",
+        "Creator Membership",
         "Creator Token",
       ];
     case "Long-term Partnership":
@@ -222,7 +222,7 @@ function generateRoute(
         "Brand Relationship",
         "Ambassador Discussion",
         `${primaryChannel} Long-term Plan`,
-        "Long-term MOU",
+        "Long-term Membership",
         "Creator Token",
       ];
     default:
@@ -232,7 +232,7 @@ function generateRoute(
         "Brand Exposure",
         "Collaboration Matching",
         "Campaign / Co-creation",
-        "Creator MOU",
+        "Creator Membership",
         "Creator Token",
       ];
   }
@@ -321,7 +321,7 @@ function CreatorHero({ onJoin, onSignMou }: { onJoin: () => void; onSignMou: () 
           transition={{ delay: 0.36 }}
           type="button"
         >
-          <Pen size={11} /> Sign Creator MOU
+          <Pen size={11} /> Activate Creator Membership
         </motion.button>
       </div>
     </section>
@@ -681,7 +681,7 @@ function MouFlowSection({ onJoin }: { onJoin: () => void }) {
           From Profile to Verified Creator Deal
         </h2>
         <p className="mx-auto mb-12 max-w-md text-sm text-white/40">
-          Register your profile, sign a simple creator MOU, and receive your Creator Passport confirmation by email.
+          Register your profile, activate your creator membership, and receive your Creator Passport confirmation by email.
         </p>
 
         <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -981,7 +981,7 @@ function CreatorModal({
                   {item === "form"
                     ? "Creator Info"
                     : item === "mou"
-                      ? "MOU Signature"
+                      ? "Membership Signature"
                       : "Passport Token"}
                 </span>
                 {index < 2 ? <ChevronRight className="text-white/15" size={12} /> : null}
@@ -1056,7 +1056,7 @@ function CreatorModal({
                 onClick={() => setCurrentStep("mou")}
                 type="button"
               >
-                Continue to Creator MOU <ArrowRight size={14} />
+                Continue to Membership <ArrowRight size={14} />
               </button>
             </div>
           ) : null}
@@ -1067,13 +1067,13 @@ function CreatorModal({
                 className="mb-1 text-2xl font-black text-white"
                 style={{ fontFamily: "var(--font-barlow), sans-serif" }}
               >
-                Sign Creator Network MOU
+                Activate Creator Network Membership
               </h3>
-              <p className="mb-5 text-sm text-white/40">Creator Network Participation MOU</p>
+              <p className="mb-5 text-sm text-white/40">Creator Network Membership</p>
 
               <div className="mb-5 space-y-3 rounded-2xl bg-white/[0.03] p-5 text-sm">
                 {[
-                  { label: "Agreement Type", value: "Creator Network Participation MOU" },
+                  { label: "Membership Type", value: "Creator Network Membership" },
                   { label: "Creator Name", value: form.creatorName || "-" },
                   { label: "Email", value: form.email || "-" },
                   { label: "Category", value: category || "-" },
@@ -1094,7 +1094,7 @@ function CreatorModal({
                 ))}
                 <div className="border-t border-white/5 pt-3">
                   <p className="text-xs leading-relaxed text-white/35">
-                    This MOU confirms the creator&apos;s interest in joining the Hitpick Creator Network and exploring brand collaborations, creator co-creation projects, campaign opportunities, and global exposure through Hitpick.
+                    This membership confirms the creator&apos;s interest in joining the Hitpick Creator Network and exploring brand collaborations, creator co-creation projects, campaign opportunities, and global exposure through Hitpick.
                   </p>
                 </div>
               </div>
@@ -1167,7 +1167,7 @@ function CreatorModal({
                     Creator Passport Token Issued
                   </h3>
                   <p className="text-xs text-white/40">
-                    Your Creator Network MOU has been issued from the server and stored in Hitpick.
+                    Your Creator Network membership has been issued from the server and stored in Hitpick.
                   </p>
                 </div>
               </div>
@@ -1202,7 +1202,7 @@ function CreatorModal({
                 <div className="mb-4 grid grid-cols-2 gap-2 text-xs">
                   {[
                     { highlight: true, label: "Token ID", value: token.tokenId },
-                    { label: "Type", value: token.mouType },
+                    { label: "Membership", value: token.mouType },
                     { label: "Creator", value: token.creatorName },
                     { label: "Email", value: token.email },
                     { label: "Country", value: token.country || "-" },

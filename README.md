@@ -1,20 +1,20 @@
 # Hitpick Global Deal Platform
 
-Current working status for the rebuilt Hitpick site and MOU proof flow.
+Current working status for the rebuilt Hitpick site and membership proof flow.
 
 ## Overview
 
 This repository now contains:
 - 4-page marketing site rebuilt from the Figma Make ZIP reference
 - `Home`, `Global Deal`, `Creator`, `About` routes
-- server-side MOU issuance flow
+- server-side membership issuance flow
 - Supabase storage + database persistence
 - Polygon Amoy blockchain anchoring for issued proofs
 
 Important architecture note:
 - the current blockchain model is an EVM proof registry
 - it is not an ERC-20, ERC-721, or SBT minting flow
-- each MOU issuance stores proof metadata on-chain through a registry contract
+- each membership issuance stores proof metadata on-chain through a registry contract
 
 ## Current Routes
 
@@ -33,7 +33,7 @@ Primary design source:
 
 The current implementation was adapted from the attached Figma Make ZIP and its page files, not from the legacy Hitpick codebase.
 
-## Current MOU Flow
+## Current Membership Flow
 
 The active server flow is:
 1. user fills the form and signs in the browser
@@ -76,7 +76,7 @@ Stored on-chain:
 - `routeHash`
 - `subjectHash`
 - `proofType`
-- `mouType`
+- membership type (`mouType`)
 - `issuedAt`
 
 Registry contract:
@@ -109,7 +109,7 @@ Server implementation:
 
 ### `POST /api/mou/resend`
 
-Resends email for an existing submission when email delivery is configured.
+Resends email for an existing membership submission when email delivery is configured.
 
 Server implementation:
 - `app/api/mou/resend/route.ts`
@@ -298,7 +298,7 @@ Operational next steps:
 If continuing in a new chat, the important context is:
 - the legacy Hitpick codebase has already been replaced
 - the current site is the Figma Make-based 4-page rebuild
-- MOU issuance is already working server-side with Supabase
+- membership issuance is already working server-side with Supabase
 - Polygon Amoy registry deployment is complete
 - Polygon mainnet registry deployment is also complete at `0x9Ec78B0708C07f3dF69eC58D94653aA91548DAeE`
 - contract address is `0x10212Ec28FfAb4d92fbB790952b08AeaD7bC7050`

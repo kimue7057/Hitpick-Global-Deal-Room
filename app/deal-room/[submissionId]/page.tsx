@@ -128,7 +128,7 @@ export default async function DealRoomDetailPage({
                 {[
                   ["Token ID", token.tokenId],
                   ["Submission ID", token.submissionId],
-                  ["MOU Type", token.mouType],
+                  ["Membership Type", token.mouType],
                   ["Issued At", new Date(token.issuedAt).toLocaleString()],
                   ["User Email Status", token.emailSent ? "sent" : "pending"],
                   ["Admin Email Status", token.adminEmailSent ? "sent" : "pending"],

@@ -62,7 +62,7 @@ type Goal =
   | "Creator Campaign"
   | "Distribution Entry"
   | "Full Global Expansion"
-  | "Partnership MOU";
+  | "Partnership Membership";
 type ModalStep = "closed" | "form" | "mou" | "token";
 
 const categoryLabel: Record<Category, string> = {
@@ -106,7 +106,7 @@ const GOALS: Goal[] = [
   "Creator Campaign",
   "Distribution Entry",
   "Full Global Expansion",
-  "Partnership MOU",
+  "Partnership Membership",
 ];
 
 const cardBase = "bg-[#0d1424] border border-white/[0.07] rounded-2xl";
@@ -143,7 +143,7 @@ function generateRoute(market: Market, category: Category, goal: Goal): string[]
         "Online Commerce Route",
         "Offline Pop-up / Retail Route",
         "Distribution Partner Matching",
-        "Partnership MOU",
+        "Partnership Membership",
       ];
     case "Full Global Expansion":
       return [
@@ -154,15 +154,15 @@ function generateRoute(market: Market, category: Category, goal: Goal): string[]
         "Online Commerce Activation",
         "Offline Pop-up / Retail Partner",
         "Distribution Partner Matching",
-        "Global Partnership MOU",
+        "Global Partnership Membership",
       ];
-    case "Partnership MOU":
+    case "Partnership Membership":
       return [
         `${market} Partnership Route`,
         "Brand Expansion Discussion",
         "Creator / Commerce / Distribution Review",
         "Partnership Interest Confirmation",
-        "Global Partnership MOU",
+        "Global Partnership Membership",
         "Deal Room Creation",
       ];
     default:
@@ -173,7 +173,7 @@ function generateRoute(market: Market, category: Category, goal: Goal): string[]
         "Audience Activation",
         "Commerce Route",
         "Distribution Partner Matching",
-        "Global Partnership MOU",
+        "Global Partnership Membership",
       ];
   }
 }
@@ -273,7 +273,7 @@ function CreatorWallHero({
                 onClick={onMOU}
                 type="button"
               >
-                <Pen size={13} /> Sign MOU Now
+                <Pen size={13} /> Activate Membership
               </button>
             </motion.div>
 
@@ -348,7 +348,7 @@ function CreatorWallHero({
               initial={{ opacity: 0, scale: 0.8 }}
               transition={{ delay: 0.7 }}
             >
-              100+ creators / 6 categories / MOU ready
+              100+ creators / 6 categories / membership ready
             </motion.div>
           </div>
         </div>
@@ -413,7 +413,7 @@ function CreatorWallHero({
               onClick={onMOU}
               type="button"
             >
-              <Pen size={12} /> Sign MOU Now
+              <Pen size={12} /> Activate Membership
             </button>
           </div>
         </motion.div>
@@ -490,7 +490,7 @@ function LaunchRoutePreview({
 
           <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-white/5 pt-6">
             <p className="text-sm text-white/40">
-              Hitpick Support included: Creator Matching, MOU, Deal Room, Token Certificate
+              Hitpick Support included: Creator Matching, Membership, Deal Room, Token Certificate
             </p>
             <button
               className="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white transition-all hover:shadow-[0_0_25px_rgba(59,130,246,0.35)] hover:bg-blue-500"
@@ -670,7 +670,7 @@ function DealRoomPreview({
           Your Private Deal Room
         </h2>
         <p className="mb-10 text-base text-white/45">
-          After signing the MOU, your brand receives a private deal room for follow-up proposals, documents, campaign routes, and token proof.
+          After activating your membership, your brand receives a private deal room for follow-up proposals, documents, campaign routes, and token proof.
         </p>
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
@@ -687,7 +687,7 @@ function DealRoomPreview({
                 </span>
               </div>
               <span className="rounded-full border border-amber-400/25 bg-amber-400/15 px-2.5 py-1 text-[10px] font-bold text-amber-400">
-                MOU PENDING
+                MEMBERSHIP PENDING
               </span>
             </div>
 
@@ -719,7 +719,7 @@ function DealRoomPreview({
                 "Brand expansion summary",
                 "Creator campaign route",
                 "Distribution route",
-                "MOU document",
+                "Membership record",
                 "Verified token proof",
               ].map((item) => (
                 <div
@@ -744,12 +744,12 @@ function DealRoomPreview({
                 Create Your Deal Room
               </h3>
               <p className="mb-6 text-sm leading-relaxed text-white/40">
-                Fill in your company info, sign the MOU, and receive your verified Global Deal Token.
+                Fill in your company info, activate your membership, and receive your verified Global Deal Token.
               </p>
               <div className="space-y-2 text-xs text-white/40">
                 {[
                   "Private company profile",
-                  "Verified MOU document",
+                  "Verified membership record",
                   "Deal token certificate",
                   "Admin follow-up dashboard",
                 ].map((item) => (
@@ -1043,7 +1043,7 @@ function DealModal({
                   {item === "form"
                     ? "Company Info"
                     : item === "mou"
-                      ? "MOU Signature"
+                      ? "Membership Signature"
                       : "Deal Token"}
                 </span>
                 {index < 2 ? <ChevronRight className="text-white/15" size={12} /> : null}
@@ -1060,7 +1060,7 @@ function DealModal({
                 Create Your Global Deal Room
               </h3>
               <p className="mb-6 text-sm text-white/40">
-                Enter your contact information to create your deal room and continue to the partnership MOU.
+                Enter your contact information to create your deal room and continue to the partnership membership.
               </p>
 
               <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -1115,7 +1115,7 @@ function DealModal({
                 onClick={() => setCurrentStep("mou")}
                 type="button"
               >
-                Continue to MOU <ArrowRight size={14} />
+                Continue to Membership <ArrowRight size={14} />
               </button>
             </div>
           ) : null}
@@ -1126,13 +1126,13 @@ function DealModal({
                 className="mb-1 text-2xl font-black text-white"
                 style={{ fontFamily: "var(--font-barlow), sans-serif" }}
               >
-                Sign Global Partnership MOU
+                Activate Global Partnership Membership
               </h3>
-              <p className="mb-6 text-sm text-white/40">Global Partnership Interest MOU</p>
+              <p className="mb-6 text-sm text-white/40">Global Partnership Membership</p>
 
               <div className="mb-6 space-y-3 rounded-2xl bg-white/[0.03] p-5 text-sm">
                 {[
-                  { label: "Agreement Type", value: "Global Partnership Interest MOU" },
+                  { label: "Membership Type", value: "Global Partnership Membership" },
                   { label: "Company", value: form.companyName || "-" },
                   { label: "Contact", value: form.contactName || "-" },
                   { label: "Email", value: form.email || "-" },
@@ -1225,7 +1225,7 @@ function DealModal({
                     Global Deal Token Issued
                   </h3>
                   <p className="text-xs text-white/40">
-                    Your partnership MOU has been issued from the server and stored in Hitpick.
+                    Your blockchain membership has been issued from the server and stored in Hitpick.
                   </p>
                 </div>
               </div>
@@ -1260,7 +1260,7 @@ function DealModal({
                 <div className="mb-4 grid grid-cols-2 gap-2 text-xs">
                   {[
                     { highlight: true, label: "Token ID", value: token.tokenId },
-                    { label: "Type", value: token.mouType },
+                    { label: "Membership", value: token.mouType },
                     { label: "Company", value: token.companyName },
                     { label: "Contact", value: token.contactName },
                     { label: "Email", value: token.email },

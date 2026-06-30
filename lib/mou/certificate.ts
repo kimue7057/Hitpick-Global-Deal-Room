@@ -81,7 +81,9 @@ export function buildMouCertificateHtml(token: IssuedMouToken) {
     )
     .join("");
   const title =
-    token.type === "global_deal" ? "Hitpick Global Deal Certificate" : "Hitpick Creator Passport Certificate";
+    token.type === "global_deal"
+      ? "Hitpick Global Deal Membership Certificate"
+      : "Hitpick Creator Passport Membership Certificate";
   const transactionLink = token.blockchain.transactionUrl
     ? `<p class="link-row"><a href="${escapeHtml(token.blockchain.transactionUrl)}" target="_blank" rel="noreferrer">View On-Chain Transaction</a></p>`
     : "";
@@ -293,7 +295,7 @@ export function buildMouCertificateHtml(token: IssuedMouToken) {
           <h2>Certificate Details</h2>
           <table>
             <tbody>
-              <tr><th>MOU Type</th><td>${escapeHtml(token.mouType)}</td></tr>
+              <tr><th>Membership Type</th><td>${escapeHtml(token.mouType)}</td></tr>
               <tr><th>Proof Type</th><td>${escapeHtml(token.proofType)}</td></tr>
               ${details}
             </tbody>

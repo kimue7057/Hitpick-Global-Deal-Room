@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   } catch (error) {
     const status = error instanceof MouRequestError ? 400 : 500;
     const message =
-      error instanceof Error ? error.message : "Unable to issue the MOU token right now.";
+      error instanceof Error ? error.message : "Unable to issue the membership token right now.";
 
     return Response.json(
       {

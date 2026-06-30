@@ -86,7 +86,7 @@ export const footerColumns = [
     title: "Platform",
   },
   {
-    items: ["Global Deal", "Creator Passport", "Partnership MOU"],
+    items: ["Global Deal", "Creator Passport", "Partnership Membership"],
     title: "Flows",
   },
   {
@@ -182,7 +182,7 @@ export const globalDealTrustStats: StatItem[] = [
   { value: "100+", label: "Verified Creators" },
   { value: "30+", label: "Global Partners" },
   { value: "6+", label: "Content Categories" },
-  { value: "MOU", label: "in Minutes" },
+  { value: "Membership", label: "in Minutes" },
 ];
 
 export const globalDealValueCards: SimpleCard[] = [
@@ -218,9 +218,9 @@ export const globalDealValueCards: SimpleCard[] = [
   },
   {
     color: "#3b82f6",
-    desc: "Move from meeting to partnership interest through simplified tablet-based MOU signing.",
+    desc: "Move from first meeting to partnership interest through a simplified membership confirmation flow.",
     icon: "file-text",
-    title: "Partnership MOU",
+    title: "Partnership Membership",
   },
   {
     color: "#8b5cf6",
@@ -230,7 +230,7 @@ export const globalDealValueCards: SimpleCard[] = [
   },
   {
     color: "#fbbf24",
-    desc: "Receive a digital proof certificate linked to the signed MOU and document verification hash.",
+    desc: "Receive a digital proof certificate linked to your membership record and document verification hash.",
     icon: "award",
     title: "Verified Deal Token",
   },
@@ -376,12 +376,12 @@ export const creatorProofStats: StatItem[] = [
   { value: "100+", label: "Creator Pool" },
   { value: "30+", label: "Global Partners" },
   { value: "8+", label: "Collab Types" },
-  { value: "MOU", label: "in Minutes" },
+  { value: "Membership", label: "in Minutes" },
 ];
 
 export const creatorFlowSteps = [
   { n: "01", sub: "Fill in your creator profile in minutes", title: "Create Creator Passport" },
-  { n: "02", sub: "Simple digital signature on any device", title: "Sign Creator Network MOU" },
+  { n: "02", sub: "Simple digital signature on any device", title: "Activate Creator Network Membership" },
   { n: "03", sub: "Email confirmation + certificate issued", title: "Receive Creator Passport Token" },
 ];
 
@@ -434,7 +434,7 @@ export const aboutWhatCards: SimpleCard[] = [
   },
   {
     color: "#f59e0b",
-    desc: "Simplified MOU and agreement flows with digital certificates and token-based proof.",
+    desc: "Simplified membership and agreement flows with digital certificates and token-based proof.",
     icon: "award",
     title: "Verified Deals",
   },
@@ -443,7 +443,7 @@ export const aboutWhatCards: SimpleCard[] = [
 export const aboutNetworkStats = [
   { val: "100+", label: "Domestic Creator Pool" },
   { val: "30+", label: "Global Partners" },
-  { val: "11+", label: "Global MOUs" },
+  { val: "11+", label: "Global Memberships" },
   { val: "4+", label: "Domestic Partnerships" },
   { val: "6+", label: "Content Categories" },
 ];
@@ -453,7 +453,7 @@ export const aboutInfraCards: SimpleCard[] = [
     color: "#3b82f6",
     desc: "Sign partnership intent quickly at events or online.",
     icon: "file-text",
-    title: "Tablet MOU",
+    title: "Tablet Membership",
   },
   {
     color: "#10b981",
@@ -507,7 +507,7 @@ export const erutyFeatureCards: SimpleCard[] = [
   },
   {
     color: "#3b82f6",
-    desc: "MOU / Certificate / Deal",
+    desc: "Membership / Certificate / Deal",
     icon: "network",
     title: "Partnership workflows",
   },

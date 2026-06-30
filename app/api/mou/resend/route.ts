@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   } catch (error) {
     const status = error instanceof MouRequestError ? 400 : 500;
     const message =
-      error instanceof Error ? error.message : "Unable to resend the MOU email right now.";
+      error instanceof Error ? error.message : "Unable to resend the membership email right now.";
 
     return Response.json(
       {

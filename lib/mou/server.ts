@@ -133,8 +133,8 @@ type ResolvedServices = {
   supabase: ReturnType<typeof createSupabaseClient>;
 };
 
-const GLOBAL_MOU_TYPE = "Global Partnership Interest MOU";
-const CREATOR_MOU_TYPE = "Creator Network Participation MOU";
+const GLOBAL_MOU_TYPE = "Global Partnership Membership";
+const CREATOR_MOU_TYPE = "Creator Network Membership";
 
 export class MouRequestError extends Error {}
 
@@ -245,8 +245,12 @@ function sanitizeRoute(type: MouSubmissionType, route: string[]) {
   }
 
   return type === "global_deal"
-    ? ["Direct Global Deal MOU Request"]
-    : ["Direct Creator Passport MOU Request"];
+    ? ["Direct Global Deal Membership Request"]
+    : ["Direct Creator Passport Membership Request"];
+}
+
+function normalizeMembershipCopy(value: string) {
+  return value.replaceAll("MOU", "Membership");
 }
 
 function isValidEmail(value: string) {
@@ -324,7 +328,7 @@ function parseIssuePayload(input: unknown): MouIssuePayload {
     };
   }
 
-  throw new MouRequestError("Unsupported MOU type.");
+  throw new MouRequestError("Unsupported membership type.");
 }
 
 function parseResendInput(input: unknown) {
@@ -423,17 +427,17 @@ function buildFieldTable(fields: Array<{ label: string; value: string }>) {
 function buildEmailMessage(record: SubmissionRecord, audience: "user" | "admin"): EmailMessage {
   const intro =
     record.type === "global_deal"
-      ? "Your Global Deal Token has been issued and your MOU record has been verified."
-      : "Your Creator Passport Token has been issued and your creator MOU record has been verified.";
+      ? "Your Global Deal Token has been issued and your membership record has been verified."
+      : "Your Creator Passport Token has been issued and your creator membership record has been verified.";
   const adminIntro =
     record.type === "global_deal"
-      ? "A new Global Deal MOU submission has been issued."
-      : "A new Creator MOU submission has been issued.";
+      ? "A new Global Deal membership submission has been issued."
+      : "A new Creator membership submission has been issued.";
   const fields =
     record.type === "global_deal"
       ? [
           { label: "Token ID", value: record.tokenId },
-          { label: "MOU Type", value: record.mouType },
+          { label: "Membership Type", value: record.mouType },
           { label: "Company", value: record.companyName },
           { label: "Contact", value: record.contactName },
           { label: "Email", value: record.email },
@@ -449,7 +453,7 @@ function buildEmailMessage(record: SubmissionRecord, audience: "user" | "admin")
         ]
       : [
           { label: "Token ID", value: record.tokenId },
-          { label: "MOU Type", value: record.mouType },
+          { label: "Membership Type", value: record.mouType },
           { label: "Creator", value: record.creatorName },
           { label: "Email", value: record.email },
           { label: "Country", value: record.country },
@@ -474,8 +478,8 @@ function buildEmailMessage(record: SubmissionRecord, audience: "user" | "admin")
       : [];
   const title =
     record.type === "global_deal"
-      ? "Hitpick Global Deal Token"
-      : "Hitpick Creator Passport Token";
+      ? "Hitpick Global Deal Membership"
+      : "Hitpick Creator Passport Membership";
 
   return {
     html: `
@@ -716,7 +720,7 @@ async function insertSubmission(
     .single();
 
   if (error || !data) {
-    throw new Error(`Failed to store MOU submission: ${error?.message ?? "Unknown error"}`);
+    throw new Error(`Failed to store membership submission: ${error?.message ?? "Unknown error"}`);
   }
 
   return fromDbRow(data as DbSubmissionRow);
@@ -843,17 +847,17 @@ function fromDbRow(row: DbSubmissionRow): SubmissionRecord {
     documentHash: row.document_hash,
     email: row.email,
     emailSent: Boolean(row.email_sent),
-    goal: row.goal ?? "",
+    goal: normalizeMembershipCopy(row.goal ?? ""),
     id: row.id,
     issuedAt: row.issued_at,
     mainChannel: row.main_channel ?? "",
     market: row.market ?? "",
-    mouType: row.mou_type,
+    mouType: normalizeMembershipCopy(row.mou_type),
     name: row.name ?? "",
     proofType: row.proof_type,
     rawPayload: normalizeJson(row.raw_payload),
     region: row.region ?? "",
-    route: normalizeRoute(row.route),
+    route: normalizeRoute(row.route).map(normalizeMembershipCopy),
     signatureHash: row.signature_hash ?? "",
     signatureUrl: row.signature_url,
     snsLink: row.sns_link ?? "",
@@ -1016,7 +1020,7 @@ async function findSubmissionById(
     .single();
 
   if (error || !data) {
-    throw new MouRequestError("MOU submission not found.");
+    throw new MouRequestError("Membership submission not found.");
   }
 
   return fromDbRow(data as DbSubmissionRow);
