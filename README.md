@@ -58,6 +58,18 @@ Current chain:
 Current approach:
 - proof registry contract, not NFT minting
 
+Mainnet migration note:
+- the current deployed contract is still on Amoy
+- moving to Polygon mainnet does not require a product-model rewrite
+- it does require a new mainnet registry deployment and updated env values
+
+Polygon mainnet deployment prepared on 2026-06-30:
+- contract address: `0x9Ec78B0708C07f3dF69eC58D94653aA91548DAeE`
+- explorer: [PolygonScan contract](https://polygonscan.com/address/0x9Ec78B0708C07f3dF69eC58D94653aA91548DAeE)
+- deployment tx: [0x6328eaf5e97ab246f7e45d69eed53a60bae4203769c857f595e2a1dc4cc0495a](https://polygonscan.com/tx/0x6328eaf5e97ab246f7e45d69eed53a60bae4203769c857f595e2a1dc4cc0495a)
+- local `.env.local` can point to this mainnet registry
+- Vercel production env must still be updated separately before production issuance uses mainnet
+
 Stored on-chain:
 - `tokenId`
 - `documentHash`
@@ -168,6 +180,7 @@ Current blockchain env:
 - `BLOCKCHAIN_PRIVATE_KEY`
 - `BLOCKCHAIN_OWNER_ADDRESS`
 - `BLOCKCHAIN_NETWORK_NAME`
+- `BLOCKCHAIN_EXPECTED_CHAIN_ID`
 - `BLOCKCHAIN_CONFIRMATIONS`
 - `BLOCKCHAIN_EXPLORER_TX_BASE_URL`
 - `MOU_REGISTRY_ADDRESS`
@@ -175,6 +188,12 @@ Current blockchain env:
 Important:
 - `.env.local` is local only and must not be committed
 - Vercel must have matching production env values configured separately
+
+Recommended Polygon mainnet values:
+- `BLOCKCHAIN_NETWORK_NAME=Polygon Mainnet`
+- `BLOCKCHAIN_EXPECTED_CHAIN_ID=137`
+- `BLOCKCHAIN_EXPLORER_TX_BASE_URL=https://polygonscan.com/tx`
+- `BLOCKCHAIN_CONFIRMATIONS=2`
 
 ## Local Commands
 
@@ -196,6 +215,11 @@ pnpm build
 Lint:
 ```bash
 pnpm lint
+```
+
+Check blockchain env:
+```bash
+pnpm check:blockchain
 ```
 
 Compile contract:
@@ -222,10 +246,30 @@ Current production deployment should use:
 - the `main` branch
 - the pushed blockchain commit
 
+## Mainnet Migration Path
+
+Lowest-risk migration path:
+1. keep the current proof registry contract model
+2. compile the existing contract
+3. fund the deployer / issuer wallet with real `POL`
+4. deploy a new `HitpickMouRegistry` to Polygon mainnet
+5. update `BLOCKCHAIN_RPC_URL`
+6. update `MOU_REGISTRY_ADDRESS`
+7. set `BLOCKCHAIN_EXPECTED_CHAIN_ID=137`
+8. set `BLOCKCHAIN_EXPLORER_TX_BASE_URL=https://polygonscan.com/tx`
+9. redeploy / refresh Vercel env
+10. run one production issuance test
+
+Safety checks now included in code:
+- blockchain writes fail fast if the connected chain does not match `BLOCKCHAIN_EXPECTED_CHAIN_ID`
+- deployment fails fast if the deployer wallet has no native balance
+- runtime anchoring fails fast if the issuer wallet has no native balance
+
 ## Known Notes
 
 - the current blockchain integration uses Polygon Amoy, not Polygon mainnet
 - the current on-chain model is registry-style proof anchoring, not token minting
+- contract addresses are chain-specific, so the Amoy address cannot be reused on Polygon mainnet
 - free RPC providers may timeout during deployment or issuance
 - if Amoy RPC becomes unstable, replace it with a dedicated Alchemy or QuickNode endpoint
 - `reference/make-design/` is kept for design reference and is excluded from lint noise
@@ -234,9 +278,10 @@ Current production deployment should use:
 ## Recommended Next Steps
 
 Short-term:
-1. verify production end-to-end issuance once more on Vercel
-2. test both `/global-deal` and `/creator` issuance flows in production
-3. optionally verify the contract on Polygonscan for easier read/write inspection
+1. update Vercel blockchain env values to the deployed mainnet contract
+2. verify production end-to-end issuance once more on Vercel
+3. test both `/global-deal` and `/creator` issuance flows in production
+4. optionally verify the contract on Polygonscan for easier read/write inspection
 
 Product decisions still open:
 1. stay on registry-style proof anchoring
@@ -255,7 +300,9 @@ If continuing in a new chat, the important context is:
 - the current site is the Figma Make-based 4-page rebuild
 - MOU issuance is already working server-side with Supabase
 - Polygon Amoy registry deployment is complete
+- Polygon mainnet registry deployment is also complete at `0x9Ec78B0708C07f3dF69eC58D94653aA91548DAeE`
 - contract address is `0x10212Ec28FfAb4d92fbB790952b08AeaD7bC7050`
 - blockchain anchoring UI has been added to issued-token screens
 - latest blockchain code was committed and pushed to `main`
 - Vercel production should now be using that pushed code
+- production still needs env cutover to the new Polygon mainnet registry

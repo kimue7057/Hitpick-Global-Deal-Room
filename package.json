@@ -11,6 +11,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "check:blockchain": "node --env-file=.env.local scripts/check-blockchain-env.mjs",
     "compile:contracts": "node scripts/compile-contracts.mjs",
     "deploy:registry": "node --env-file=.env.local scripts/deploy-mou-registry.mjs"
   },

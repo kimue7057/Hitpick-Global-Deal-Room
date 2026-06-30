@@ -17,6 +17,7 @@ type BlockchainAnchorInput = {
 
 type BlockchainConfig = {
   confirmations: number;
+  expectedChainId: number | null;
   explorerTxBaseUrl: string | null;
   networkName: string | null;
   privateKey: string;
@@ -60,6 +61,20 @@ function normalizeHash32(value: string) {
   return `0x${normalized.toLowerCase()}` as `0x${string}`;
 }
 
+function parseExpectedChainId(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error("BLOCKCHAIN_EXPECTED_CHAIN_ID must be a positive integer like 137.");
+  }
+
+  return parsed;
+}
+
 function resolveBlockchainConfig():
   | { config: BlockchainConfig; error: null }
   | { config: null; error: string | null } {
@@ -67,6 +82,7 @@ function resolveBlockchainConfig():
   const privateKey = getOptionalEnv("BLOCKCHAIN_PRIVATE_KEY");
   const registryAddress = getOptionalEnv("MOU_REGISTRY_ADDRESS");
   const networkName = getOptionalEnv("BLOCKCHAIN_NETWORK_NAME");
+  const expectedChainIdValue = getOptionalEnv("BLOCKCHAIN_EXPECTED_CHAIN_ID");
   const explorerTxBaseUrl = getOptionalEnv("BLOCKCHAIN_EXPLORER_TX_BASE_URL");
   const confirmationsValue = getOptionalEnv("BLOCKCHAIN_CONFIRMATIONS");
   const hasAnyConfig = [rpcUrl, privateKey, registryAddress].some(Boolean);
@@ -84,10 +100,21 @@ function resolveBlockchainConfig():
   }
 
   const confirmations = Number(confirmationsValue ?? "1");
+  let expectedChainId: number | null;
+
+  try {
+    expectedChainId = parseExpectedChainId(expectedChainIdValue);
+  } catch (error) {
+    return {
+      config: null,
+      error: error instanceof Error ? error.message : "Invalid blockchain chain configuration.",
+    };
+  }
 
   return {
     config: {
       confirmations: Number.isFinite(confirmations) && confirmations > 0 ? confirmations : 1,
+      expectedChainId,
       explorerTxBaseUrl,
       networkName,
       privateKey,
@@ -119,6 +146,22 @@ export async function anchorMouProofOnChain(
     const signer = new Wallet(config.privateKey, provider);
     const contract = new Contract(config.registryAddress, hitpickMouRegistryAbi, signer);
     const network = await provider.getNetwork();
+    const chainId = Number(network.chainId);
+
+    if (config.expectedChainId !== null && chainId !== config.expectedChainId) {
+      throw new Error(
+        `Connected chain ${chainId} does not match BLOCKCHAIN_EXPECTED_CHAIN_ID=${config.expectedChainId}.`,
+      );
+    }
+
+    const balance = await provider.getBalance(signer.address);
+
+    if (balance <= BigInt(0)) {
+      throw new Error(
+        `Wallet ${signer.address} has no native balance on chain ${chainId}. Fund it with POL before anchoring.`,
+      );
+    }
+
     const issuedAtSeconds = Math.floor(new Date(input.issuedAt).getTime() / 1000);
     const transaction = await contract.issueProof(
       input.tokenId,
@@ -134,7 +177,7 @@ export async function anchorMouProofOnChain(
     return createEmptyReceipt("anchored", {
       anchoredAt: new Date().toISOString(),
       blockNumber: receipt?.blockNumber ? Number(receipt.blockNumber) : null,
-      chainId: Number(network.chainId),
+      chainId,
       networkName: config.networkName,
       proofKey,
       registryAddress: config.registryAddress,
